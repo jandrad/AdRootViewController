@@ -43,6 +43,9 @@
     return self;
 }
 
+//
+// This callback only will be called when GAME_AUTOROTATION == kGameAutorotationCCDirector
+//
 #if GAME_AUTOROTATION==kGameAutorotationCCDirector
 -(void) orientationChanged:(NSNotification *)notification
 {	
@@ -51,10 +54,12 @@
 	if (orientation == (UIDeviceOrientation)[[CCDirector sharedDirector] deviceOrientation])
 		return;
 	
-	//if ((orientation == UIDeviceOrientationLandscapeLeft) || (orientation == UIDeviceOrientationLandscapeRight))
+    
+    //Modify this to set the orientation needed using CCDirector
+	//if (UIDeviceOrientationIsLandscape(orientation))
 	//{
 		[[CCDirector sharedDirector] setDeviceOrientation:(ccDeviceOrientation)orientation];
-		[self  updateBannerViewOrientation];
+		[self updateBannerViewOrientationWithDirector];
 	//}
 }
 #endif
@@ -92,7 +97,7 @@
 	//
 	// return YES for the supported orientations
 	
-	return YES;//( UIInterfaceOrientationIsLandscape( interfaceOrientation ) );
+	return YES;//UIInterfaceOrientationIsLandscape(interfaceOrientation);
 	
 #else
 #error Unknown value in GAME_AUTOROTATION
@@ -157,29 +162,41 @@
 }
 
 #pragma mark -
-#pragma mark Helper Methods
+#pragma mark Ad Helper Methods
 
 - (UIDeviceOrientation)currentOrientation
 {
 	return [[CCDirector sharedDirector] deviceOrientation];
 }
 
-- (void)updateBannerViewOrientation
+- (void)updateBannerViewOrientationWithDirector
 {
 	[self rotateBannerViewWithDirector:[self currentOrientation]];
 }
 
-- (int)getBannerHeight:(UIDeviceOrientation)orientation 
+- (void)updateBannerViewOrientationUIViewController
+{
+    [self rotateBannerViewWithUIViewController:[self interfaceOrientation]];
+}
+
+- (int)getBannerHeight:(UIInterfaceOrientation)orientation 
 {
     if (UIInterfaceOrientationIsLandscape(orientation)) 
-        return 32;
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+            return  66;
+        else
+            return  32;
+        
     else
-        return 50;
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+            return  66;
+        else
+            return  50;
 }
 
 - (int)getBannerHeight 
 {
-    return [self getBannerHeight:[UIDevice currentDevice].orientation];
+    return [self getBannerHeight:[self interfaceOrientation]];
 }
 
 #pragma mark -
@@ -202,7 +219,7 @@
 #if ((GAME_AUTOROTATION==kGameAutorotationNone) || (GAME_AUTOROTATION==kGameAutorotationCCDirector))
         
         [adBannerView setHidden:YES];
-        [self updateBannerViewOrientation];
+        [self updateBannerViewOrientationWithDirector];
         
 #elif GAME_AUTOROTATION == kGameAutorotationUIViewController
         
@@ -215,7 +232,7 @@
         
         [adBannerView setFrame:CGRectOffset([adBannerView frame], 0, -[self getBannerHeight])];
         
-        [self rotateBannerViewWithUIViewController:[UIDevice currentDevice].orientation];
+        [self updateBannerViewOrientationUIViewController];
 #endif
     }
     else
@@ -260,7 +277,7 @@
         adBannerPosition = kAdBannerPositionTop;
     }
     
-    [self updateBannerViewOrientation];
+    [self updateBannerViewOrientationWithDirector];
 }
 
 #pragma mark -
@@ -368,6 +385,14 @@
 
 - (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation;
 {
+    CGSize screenSize = [[UIScreen mainScreen] bounds].size;
+    
+    CGSize windowSize;
+    if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) 
+        windowSize = CGSizeMake(screenSize.height, screenSize.width);
+    else
+        windowSize = screenSize;
+    
     if (adBannerView) 
     {        
         if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) 
@@ -375,39 +400,38 @@
         else 
             [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
         
+        CGRect adBannerViewFrame = [adBannerView frame];
+        
         if (adBannerViewIsVisible) 
         {
-            CGRect adBannerViewFrame = [adBannerView frame];
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = adBannerPosition*(self.view.frame.size.height - [self getBannerHeight:toInterfaceOrientation]);
-            [adBannerView setFrame:adBannerViewFrame];
+            adBannerViewFrame.origin.y = adBannerPosition*(windowSize.height - [self getBannerHeight:toInterfaceOrientation]);
         } 
         else 
         {
-            CGRect adBannerViewFrame = [adBannerView frame];
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = adBannerPosition*self.view.frame.size.height + (2*adBannerPosition-1)*[self getBannerHeight:toInterfaceOrientation];
-            [adBannerView setFrame:adBannerViewFrame];
+            adBannerViewFrame.origin.y = adBannerPosition*windowSize.height + (2*adBannerPosition-1)*[self getBannerHeight:toInterfaceOrientation];
         }
         
+        [adBannerView setFrame:adBannerViewFrame];
     }
     
     if (adMobAd) 
     {    
+        CGRect adBannerViewFrame = [adMobAd frame];
+        
         if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) 
         {
-            CGRect adBannerViewFrame = [adMobAd frame];
-            adBannerViewFrame.origin.x = self.view.frame.size.width*0.5 - adMobAd.frame.size.width*0.5;
-            adBannerViewFrame.origin.y = adBannerPosition*(self.view.frame.size.height - adMobAd.frame.size.height);
-            [adMobAd setFrame:adBannerViewFrame];
+            adBannerViewFrame.origin.x = windowSize.width*0.5 - adMobAd.frame.size.width*0.5;
+            adBannerViewFrame.origin.y = adBannerPosition*(windowSize.height - adMobAd.frame.size.height);
         }
         else 
         {
-            CGRect adBannerViewFrame = [adMobAd frame];
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = adBannerPosition*(self.view.frame.size.height - adMobAd.frame.size.height);
-            [adMobAd setFrame:adBannerViewFrame];
+            adBannerViewFrame.origin.y = adBannerPosition*(windowSize.height - adMobAd.frame.size.height);
         }
+        
+        [adMobAd setFrame:adBannerViewFrame];
     }
 }
 
@@ -429,7 +453,7 @@
 - (void) startActionsForAd
 {	
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
-	[self updateBannerViewOrientation];
+	[self updateBannerViewOrientationWithDirector];
 	[[UIApplication sharedApplication] setStatusBarOrientation:(UIInterfaceOrientation)[self currentOrientation]];
 #endif
 	
@@ -466,12 +490,13 @@
 		[self.view addSubview:adBannerView];
 	
 	[adBannerView setHidden:NO];
-	[self updateBannerViewOrientation];
+	[self updateBannerViewOrientationWithDirector];
+    
 #elif GAME_AUTOROTATION==kGameAutorotationUIViewController
     if (!adBannerViewIsVisible) 
     {                
         adBannerViewIsVisible = YES;
-        [self rotateBannerViewWithUIViewController:[UIDevice currentDevice].orientation];
+        [self updateBannerViewOrientationUIViewController];
     }
 #endif
 	
@@ -488,6 +513,7 @@
 	
 	if ([self.view.subviews containsObject:adBannerView])
 		[adBannerView removeFromSuperview];
+    
 #elif GAME_AUTOROTATION==kGameAutorotationUIViewController
     if (adBannerViewIsVisible)
     {        
@@ -552,8 +578,13 @@
 - (void)didReceiveAd:(AdMobView *)adView 
 {
 	CCLOG(@"AdMob: Did receive ad");
-	
-	[self updateBannerViewOrientation];
+    
+#if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
+	[self updateBannerViewOrientationWithDirector];
+#elif GAME_AUTOROTATION==kGameAutorotationUIViewController
+    [self updateBannerViewOrientationUIViewController];
+#endif
+    
 	[self.view addSubview:adMobAd];
 	[self.view sendSubviewToBack:adMobAd];
 	
@@ -575,12 +606,14 @@
 
 - (void) stopActionsForAdMobAd
 {	
+    //Pause Director
 	[[CCDirector sharedDirector] stopAnimation];
 	[[CCDirector sharedDirector] pause];
 }
 
 - (void) startActionsForAdMobAd
 {	
+    //Resume Director
 	[[CCDirector sharedDirector] stopAnimation];
 	[[CCDirector sharedDirector] resume];
 	[[CCDirector sharedDirector] startAnimation];
@@ -599,7 +632,7 @@
 - (void)didDismissFullScreenModalFromAd:(AdMobView *)adView
 {
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
-	[self updateBannerViewOrientation];
+	[self updateBannerViewOrientationWithDirector];
 	[[UIApplication sharedApplication] setStatusBarOrientation:(UIInterfaceOrientation)[self currentOrientation]];
 #endif
 }

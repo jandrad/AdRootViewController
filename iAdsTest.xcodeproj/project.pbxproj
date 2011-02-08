@@ -490,7 +490,7 @@
 		E02BBBC2126CC2F6006E46A2 /* ZipUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ZipUtils.h; sourceTree = "<group>"; };
 		E02BBBC3126CC2F6006E46A2 /* ZipUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ZipUtils.m; sourceTree = "<group>"; };
 		E0F81035120A173C005866B8 /* GameConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GameConfig.h; sourceTree = "<group>"; };
-		E0F81036120A173C005866B8 /* AdRootViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; path = AdRootViewController.h; sourceTree = "<group>"; };
+		E0F81036120A173C005866B8 /* AdRootViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdRootViewController.h; sourceTree = "<group>"; };
 		E0F81037120A173C005866B8 /* AdRootViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AdRootViewController.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1277,7 +1277,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = iAdsTest;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Debug;
@@ -1308,7 +1308,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = iAdsTest;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Release;

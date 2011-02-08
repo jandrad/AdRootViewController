@@ -39,8 +39,10 @@ enum
 - (void)removeBannerAd;
 
 - (void)rotateBannerViewWithDirector:(UIDeviceOrientation)toDeviceOrientation;
+- (void)updateBannerViewOrientationWithDirector;
+
 - (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation;
-- (void)updateBannerViewOrientation;
+- (void)updateBannerViewOrientationUIViewController;
 
 @end
 
