@@ -115,8 +115,6 @@
     //Ad banner to view and set the position
     [viewController addBannerAd];
     [viewController setAdBannerPosition:kAdBannerPositionBottom];
-    [viewController removeBannerAd];
-    [viewController addBannerAd];
 }
 
 
