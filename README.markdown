@@ -21,23 +21,23 @@ Replace the RootViewController in the Cocos2d project with the AdRootViewControl
 
 To add the ad to the controller's view call:
 
-   [viewController addBannerAd];
+    [viewController addBannerAd];
 
 To remove the ad call: 
 
-   [viewController removeBannerAd];
+    [viewController removeBannerAd];
 
 Interstitial Ads are shown calling:
 
-   [viewController addInterstitialAd];
+    [viewController addInterstitialAd];
 
 You can set the position of the ad at the Top or Bottom of the Screen, just call:
 
-   [viewController setAdBannerPosition:kAdBannerPositionBottom] 
+    [viewController setAdBannerPosition:kAdBannerPositionBottom] 
 
 or 
 
-   [viewController setAdBannerPosition:kAdBannerPositionTop]
+    [viewController setAdBannerPosition:kAdBannerPositionTop]
 
 
 Hope it helps, suggestions and corrections are always welcome.
