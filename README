@@ -1,15 +1,43 @@
-RootViewController with iAds and AdMob support for Cocos2d
+AdRootViewController
+==================
 
-Usage:
+RootViewController replacement for Cocos2d that supports iAds and AdMob.
+
+
+Features
+-------------
+
+   * Two Positions to set the Ads (Top, or Bottom)
+   * Autorotation support, using CCDirector or UIViewController
+   * Universal support (iPhone + iPad)
+   * Interstitial ads (AdMob Only)
+   * Easy to use
+
+
+Usage
+-----------------------
 
 Replace the RootViewController in the Cocos2d project with the AdRootViewController.
 
-To add the ad to the controller's view call [viewController addBannerAd];
+To add the ad to the controller's view call:
 
-To remove the ad call [viewController removeBannerAd];
+   [viewController addBannerAd];
 
-You can set the position of the ad at the Top or Bottom of the Screen, just call [viewController setAdBannerPosition:kAdBannerPositionBottom] or [viewController setAdBannerPosition:kAdBannerPositionTop]
+To remove the ad call: 
 
-The controller rotates the ad automatically using CCDirector autorotation or UIViewController's.
+   [viewController removeBannerAd];
+
+Interstitial Ads are shown calling:
+
+   [viewController addInterstitialAd];
+
+You can set the position of the ad at the Top or Bottom of the Screen, just call:
+
+   [viewController setAdBannerPosition:kAdBannerPositionBottom] 
+
+or 
+
+   [viewController setAdBannerPosition:kAdBannerPositionTop]
+
 
 Hope it helps, suggestions and corrections are always welcome.
