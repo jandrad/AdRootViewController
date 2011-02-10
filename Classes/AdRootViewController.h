@@ -1,5 +1,5 @@
 //
-//  RootViewController.h
+//  AdRootViewController.h
 //  iAdsTest
 //
 //  Created by Jose Andrade on 2/1/11.

@@ -1,5 +1,5 @@
 //
-//  RootViewController.m
+//  AdRootViewController.m
 //  iAdsTest
 //
 //  Created by Jose Andrade on 2/1/11.
@@ -546,10 +546,11 @@
 
 - (NSString *)publisherIdForAd:(AdMobView *)adView 
 {
-	return @"a14a8d567c90c4c"; // this should be prefilled; if not, get it from www.admob.com
+	return @"your_published_id"; //Replace this with your published Id
 }
 
-- (UIViewController *)currentViewControllerForAd:(AdMobView *)adView {
+- (UIViewController *)currentViewControllerForAd:(AdMobView *)adView 
+{
 	return self;
 }
 
