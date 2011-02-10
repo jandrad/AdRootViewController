@@ -9,6 +9,7 @@
 #import <UIKit/UIKit.h>
 #import <iAd/iAd.h>
 #import "AdMobDelegateProtocol.h"
+#import "AdMobInterstitialDelegateProtocol.h"
 
 enum
 {
@@ -18,7 +19,7 @@ enum
 
 @protocol AdViewControllerDelegate;
 
-@interface AdRootViewController : UIViewController <ADBannerViewDelegate, AdMobDelegate> 
+@interface AdRootViewController : UIViewController <ADBannerViewDelegate, AdMobDelegate, AdMobInterstitialDelegate> 
 {	
 	id <AdViewControllerDelegate>__weak	adDelegate;
 	
@@ -26,23 +27,30 @@ enum
 	id								adBannerView;	
 	AdMobView*						adMobAd;
     
-    //Banner Position
-    char                            adBannerPosition;
+    //Interstitial Ads:
+    AdMobInterstitialAd             *interstitialAd;
     
+
+    int                             adBannerPosition;    
     BOOL                            adBannerViewIsVisible;
 }
 
 @property (nonatomic, assign) id <AdViewControllerDelegate> adDelegate;
-@property(nonatomic, readwrite, assign) char adBannerPosition;
+@property(nonatomic, readwrite, assign) int adBannerPosition;
 
 - (void)addBannerAd;
 - (void)removeBannerAd;
+
+- (void)addInterstitialAd;
+- (void)removeInterstitialAd;
 
 - (void)rotateBannerViewWithDirector:(UIDeviceOrientation)toDeviceOrientation;
 - (void)updateBannerViewOrientationWithDirector;
 
 - (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation;
 - (void)updateBannerViewOrientationUIViewController;
+
+- (void)updateBannerViewOrientation;
 
 @end
 

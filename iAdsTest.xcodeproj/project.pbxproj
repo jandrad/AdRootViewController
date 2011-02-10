@@ -310,6 +310,8 @@
 		50F4144710692EE7002A0D5E /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6D0E9A4813006F7A00A446BE /* HelloWorldScene.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HelloWorldScene.h; sourceTree = "<group>"; };
 		6D0E9A4913006F7A00A446BE /* HelloWorldScene.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HelloWorldScene.m; sourceTree = "<group>"; };
+		6D92E16A13039B9300F22196 /* AdMobInterstitialAd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdMobInterstitialAd.h; sourceTree = "<group>"; };
+		6D92E16B13039B9300F22196 /* AdMobInterstitialDelegateProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdMobInterstitialDelegateProtocol.h; sourceTree = "<group>"; };
 		6DE8966A13007149005216AB /* AdMobDelegateProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdMobDelegateProtocol.h; sourceTree = "<group>"; };
 		6DE8966D13007149005216AB /* AdMobView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AdMobView.h; sourceTree = "<group>"; };
 		6DE8966E13007149005216AB /* libAdMob.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libAdMob.a; sourceTree = "<group>"; };
@@ -716,6 +718,8 @@
 			children = (
 				6DE8966A13007149005216AB /* AdMobDelegateProtocol.h */,
 				6DE8966D13007149005216AB /* AdMobView.h */,
+				6D92E16A13039B9300F22196 /* AdMobInterstitialAd.h */,
+				6D92E16B13039B9300F22196 /* AdMobInterstitialDelegateProtocol.h */,
 				6DE8966E13007149005216AB /* libAdMob.a */,
 			);
 			path = AdMob;

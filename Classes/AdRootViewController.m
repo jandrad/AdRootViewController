@@ -16,10 +16,12 @@
 #import "AdRootViewController.h"
 #import "GameConfig.h"
 #import "AdMobView.h"
+#import "AdMobInterstitialAd.h"
 
 @implementation AdRootViewController
 
 @synthesize adDelegate, adBannerPosition;
+
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -28,7 +30,6 @@
         adBannerPosition = kAdBannerPositionTop;
         
 #if GAME_AUTOROTATION==kGameAutorotationCCDirector
-        
         //Begin Generating orientation Notifications
         [[UIDevice currentDevice] beginGeneratingDeviceOrientationNotifications];
         
@@ -140,11 +141,13 @@
     
 	glView.frame = rect;
     
-    //Rotate Ad Banner
+    //Rotate Ad Banner to Interface Orientation
     [self rotateBannerViewWithUIViewController:toInterfaceOrientation];
 }
 #endif // GAME_AUTOROTATION == kGameAutorotationUIViewController
 
+#pragma mark -
+#pragma mark Memory Management
 
 - (void)didReceiveMemoryWarning 
 {
@@ -161,17 +164,19 @@
     // e.g. self.myOutlet = nil;
 }
 
+- (void) dealloc
+{	
+    [self removeInterstitialAd];
+	[self removeBannerAd];
+    [super dealloc];
+}
+
 #pragma mark -
 #pragma mark Ad Helper Methods
 
-- (UIDeviceOrientation)currentOrientation
-{
-	return [[CCDirector sharedDirector] deviceOrientation];
-}
-
 - (void)updateBannerViewOrientationWithDirector
 {
-	[self rotateBannerViewWithDirector:[self currentOrientation]];
+	[self rotateBannerViewWithDirector:[[CCDirector sharedDirector] deviceOrientation]];
 }
 
 - (void)updateBannerViewOrientationUIViewController
@@ -179,19 +184,18 @@
     [self rotateBannerViewWithUIViewController:[self interfaceOrientation]];
 }
 
+- (void)updateBannerViewOrientation
+{
+#if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
+	[self updateBannerViewOrientationWithDirector];
+#elif GAME_AUTOROTATION==kGameAutorotationUIViewController
+    [self updateBannerViewOrientationUIViewController];
+#endif
+}
+
 - (int)getBannerHeight:(UIInterfaceOrientation)orientation 
 {
-    if (UIInterfaceOrientationIsLandscape(orientation)) 
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-            return  66;
-        else
-            return  32;
-        
-    else
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-            return  66;
-        else
-            return  50;
+    return [ADBannerView sizeFromBannerContentSizeIdentifier:[adBannerView currentContentSizeIdentifier]].height;
 }
 
 - (int)getBannerHeight 
@@ -200,10 +204,22 @@
 }
 
 #pragma mark -
-#pragma mark Ad Support
+#pragma mark Banner Ads Support
+
+- (void)requestAdMobAd
+{
+    //Request an AdMob Ad
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+        adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_748x110 withDelegate:self];
+    else
+        adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_320x48 withDelegate:self];
+    [adMobAd retain];
+}
 
 - (void)addBannerAd
 {
+    adBannerViewIsVisible = NO;
+    
     //Initialize the class manually to make it compatible with iOS < 4.0
     Class classAdBannerView = NSClassFromString(@"ADBannerView");
     if (classAdBannerView != nil) 
@@ -215,34 +231,11 @@
                                                           ADBannerContentSizeIdentifierLandscape, nil]];
         
         [self.view addSubview:adBannerView];
-        
-#if ((GAME_AUTOROTATION==kGameAutorotationNone) || (GAME_AUTOROTATION==kGameAutorotationCCDirector))
-        
-        [adBannerView setHidden:YES];
-        [self updateBannerViewOrientationWithDirector];
-        
-#elif GAME_AUTOROTATION == kGameAutorotationUIViewController
-        
-        adBannerViewIsVisible = NO;
-        
-        if (UIInterfaceOrientationIsLandscape([UIDevice currentDevice].orientation))
-            [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierLandscape];
-        else
-            [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
-        
-        [adBannerView setFrame:CGRectOffset([adBannerView frame], 0, -[self getBannerHeight])];
-        
-        [self updateBannerViewOrientationUIViewController];
-#endif
+        [self updateBannerViewOrientation];
     }
     else
     {
-        //Request an AdMob Ad
-        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-            adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_748x110 withDelegate:self];
-        else
-            adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_320x48 withDelegate:self];
-        [adMobAd retain];
+        [self requestAdMobAd];
     }
 }
 
@@ -265,7 +258,7 @@
 	}
 }
 
-- (void)setAdBannerPosition:(char)pos
+- (void)setAdBannerPosition:(int)pos
 {
     if ((pos == kAdBannerPositionTop)||(pos ==kAdBannerPositionBottom))
     {
@@ -277,7 +270,7 @@
         adBannerPosition = kAdBannerPositionTop;
     }
     
-    [self updateBannerViewOrientationWithDirector];
+    [self updateBannerViewOrientation];
 }
 
 #pragma mark -
@@ -287,106 +280,95 @@
 {	
 	//Get Screen Size
 	CGSize screenSize = [[UIScreen mainScreen] bounds].size;
-	
+    
+    //Banner Position
+    int pos = adBannerPosition;
+    
+    UIView *bannerView = nil;;
+    
 	if (adBannerView)
 	{	
 		if (UIDeviceOrientationIsLandscape(toDeviceOrientation))
             [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierLandscape];
 		else
             [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
-		
-        //Restore trandform to identity
-        [(UIView*)adBannerView setTransform:CGAffineTransformIdentity];
         
-		//Get ADBannerView Frame
-		CGSize adBannerViewSize = [adBannerView frame].size;
-        
-        //Set Frame
-		[adBannerView setFrame:CGRectMake(0.f, 0.f, adBannerViewSize.width, adBannerViewSize.height)];
-		
-		//Set the transformation for each orientation
-		switch (toDeviceOrientation) 
-		{
-			case UIDeviceOrientationPortrait:
-			{
-				[adBannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*adBannerPosition + adBannerViewSize.height*(0.5-adBannerPosition))];
-				if ([adBannerView isHidden])
-					[adBannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*adBannerPosition + adBannerViewSize.height*(-0.5+adBannerPosition))];
-			}
-				break;
-			case UIDeviceOrientationPortraitUpsideDown:
-			{
-				[(UIView*)adBannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(180))];
-                [adBannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*(1-adBannerPosition) + adBannerViewSize.height*(-0.5+adBannerPosition))];
-				if ([adBannerView isHidden])
-                    [adBannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*(1-adBannerPosition) + adBannerViewSize.height*(0.5-adBannerPosition))];
-				
-			}
-				break;
-			case UIDeviceOrientationLandscapeLeft:
-			{
-				[(UIView*)adBannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(90))];
-                [adBannerView setCenter:CGPointMake(screenSize.width*(1-adBannerPosition) + adBannerViewSize.height*(-0.5+adBannerPosition), screenSize.height/2)];
-				if ([adBannerView isHidden])
-					[adBannerView setCenter:CGPointMake(screenSize.width*(1-adBannerPosition) + adBannerViewSize.height*(0.5-adBannerPosition), screenSize.height/2)];
-			}
-				break;
-			case UIDeviceOrientationLandscapeRight:
-			{
-				[(UIView*)adBannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(-90))];
-                [adBannerView setCenter:CGPointMake(screenSize.width*adBannerPosition + adBannerViewSize.height*(0.5-adBannerPosition), screenSize.height/2)];
-				if ([adBannerView isHidden])
-					[adBannerView setCenter:CGPointMake(screenSize.width*adBannerPosition + adBannerViewSize.height*(-0.5+adBannerPosition), screenSize.height/2)];
-				
-			}
-				break;
-			default:
-				break;
-		}
-	}
-	
-	if (adMobAd)
-	{
-		[adMobAd setTransform:CGAffineTransformIdentity];
-		
-		CGSize adMobAdSize = adMobAd.frame.size;
-		
-		//Set the transformation for each orientation
-		switch (toDeviceOrientation) 
-		{
-			case UIDeviceOrientationPortrait:
-			{
-                [adMobAd setCenter:CGPointMake(screenSize.width/2, screenSize.height*adBannerPosition + adMobAdSize.height*(0.5-adBannerPosition))];
-			}
-				break;
-			case UIDeviceOrientationPortraitUpsideDown:
-			{
-				[adMobAd setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(180))];
-                [adMobAd setCenter:CGPointMake(screenSize.width/2, screenSize.height*(1-adBannerPosition) + adMobAdSize.height*(-0.5+adBannerPosition))];
-			}
-				break;
-			case UIDeviceOrientationLandscapeLeft:
-			{
-				[adMobAd setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(90))];
-                [adMobAd setCenter:CGPointMake(screenSize.width*(1-adBannerPosition) + adMobAdSize.height*(-0.5+adBannerPosition), screenSize.height/2)];
-			}
-				break;
-			case UIDeviceOrientationLandscapeRight:
-			{
-				[adMobAd setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(-90))];
-                [adMobAd setCenter:CGPointMake(screenSize.width*adBannerPosition + adMobAdSize.height*(+0.5-adBannerPosition), screenSize.height/2)];
-			}
-				break;
-			default:
-				break;
-		}
-	}
+        bannerView = (UIView*)adBannerView;
+    }
+    
+    if (adMobAd)
+    {
+        bannerView = adMobAd;
+    }
+    
+    if (!bannerView) return;
+    
+    //Restore transform to Identity
+    [bannerView setTransform:CGAffineTransformIdentity];
+    
+    //Get Banner Size
+    CGSize bannerSize = bannerView.frame.size;
+    
+    //Set the transformation for each orientation
+    switch (toDeviceOrientation) 
+    {
+        case UIDeviceOrientationPortrait:
+        {
+            if (adBannerViewIsVisible)
+                [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(0.5-pos))];
+            else
+                [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(-0.5+pos))];
+        }
+            break;
+        case UIDeviceOrientationPortraitUpsideDown:
+        {
+            [bannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(180))];
+            if (adBannerViewIsVisible)
+                [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*(1-pos) + bannerSize.height*(-0.5+pos))];
+            else
+                [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*(1-pos) + bannerSize.height*(0.5-pos))];
+            
+        }
+            break;
+        case UIDeviceOrientationLandscapeLeft:
+        {
+            [bannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(90))];
+            if (adBannerViewIsVisible)
+                [bannerView setCenter:CGPointMake(screenSize.width*(1-pos) + bannerSize.height*(-0.5+pos), screenSize.height/2)];
+            else
+                [bannerView setCenter:CGPointMake(screenSize.width*(1-pos) + bannerSize.height*(0.5-pos), screenSize.height/2)];
+        }
+            break;
+        case UIDeviceOrientationLandscapeRight:
+        {
+            [bannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(-90))];
+            if (adBannerViewIsVisible)
+                [bannerView setCenter:CGPointMake(screenSize.width*pos + bannerSize.height*(0.5-pos), screenSize.height/2)];
+            else
+                [bannerView setCenter:CGPointMake(screenSize.width*pos + bannerSize.height*(-0.5+pos), screenSize.height/2)];
+            
+        }
+            break;
+        default: // This case was used to deal with the Unknown device orientation appearing on the iPad
+        {
+            if (adBannerViewIsVisible)
+                [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(0.5-pos))];
+            else
+                [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(-0.5+pos))];
+        }
+            break;
+    }
 }
 
 - (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation;
 {
-    CGSize screenSize = [[UIScreen mainScreen] bounds].size;
+    //Get Screen Size
+	CGSize screenSize = [[UIScreen mainScreen] bounds].size;
     
+    //Banner Position
+    int pos = adBannerPosition;
+    
+    //Set a windowSize based on the orientation, using the Screen Size as reference
     CGSize windowSize;
     if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) 
         windowSize = CGSizeMake(screenSize.height, screenSize.width);
@@ -405,15 +387,17 @@
         if (adBannerViewIsVisible) 
         {
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = adBannerPosition*(windowSize.height - [self getBannerHeight:toInterfaceOrientation]);
+            adBannerViewFrame.origin.y = pos*(windowSize.height - [self getBannerHeight:toInterfaceOrientation]);
         } 
         else 
         {
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = adBannerPosition*windowSize.height + (2*adBannerPosition-1)*[self getBannerHeight:toInterfaceOrientation];
+            adBannerViewFrame.origin.y = pos*windowSize.height + (2*pos-1)*[self getBannerHeight:toInterfaceOrientation];
         }
         
+        [UIView beginAnimations:@"Animate Banner" context:nil];
         [adBannerView setFrame:adBannerViewFrame];
+        [UIView commitAnimations];
     }
     
     if (adMobAd) 
@@ -423,12 +407,12 @@
         if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) 
         {
             adBannerViewFrame.origin.x = windowSize.width*0.5 - adMobAd.frame.size.width*0.5;
-            adBannerViewFrame.origin.y = adBannerPosition*(windowSize.height - adMobAd.frame.size.height);
+            adBannerViewFrame.origin.y = pos*(windowSize.height - adMobAd.frame.size.height);
         }
         else 
         {
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = adBannerPosition*(windowSize.height - adMobAd.frame.size.height);
+            adBannerViewFrame.origin.y = pos*(windowSize.height - adMobAd.frame.size.height);
         }
         
         [adMobAd setFrame:adBannerViewFrame];
@@ -452,10 +436,7 @@
 
 - (void) startActionsForAd
 {	
-#if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
-	[self updateBannerViewOrientationWithDirector];
-	[[UIApplication sharedApplication] setStatusBarOrientation:(UIInterfaceOrientation)[self currentOrientation]];
-#endif
+    [self updateBannerViewOrientation];
 	
 	//Resume Director
 	[[CCDirector sharedDirector] stopAnimation];
@@ -488,17 +469,13 @@
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
 	if (![self.view.subviews containsObject:adBannerView])
 		[self.view addSubview:adBannerView];
-	
-	[adBannerView setHidden:NO];
-	[self updateBannerViewOrientationWithDirector];
+#endif
     
-#elif GAME_AUTOROTATION==kGameAutorotationUIViewController
     if (!adBannerViewIsVisible) 
     {                
         adBannerViewIsVisible = YES;
-        [self updateBannerViewOrientationUIViewController];
+        [self updateBannerViewOrientation];
     }
-#endif
 	
 	if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didLoadiAd:)]))
         [adDelegate adController:self didLoadiAd:banner];
@@ -509,27 +486,20 @@
 	CCLOG(@"iAd Failed To Load With Error: %@", [error localizedDescription]);
 
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
-	[adBannerView setHidden:YES];
-	
-	if ([self.view.subviews containsObject:adBannerView])
+    if ([self.view.subviews containsObject:adBannerView])
 		[adBannerView removeFromSuperview];
+#endif
     
-#elif GAME_AUTOROTATION==kGameAutorotationUIViewController
-    if (adBannerViewIsVisible)
+	if (adBannerViewIsVisible)
     {        
         adBannerViewIsVisible = NO;
-        [self rotateBannerViewWithUIViewController:[UIDevice currentDevice].orientation];
+        [self updateBannerViewOrientation];
     }
-#endif
 	
 	if (!adMobAd)
 	{
 		CCLOG(@"Loading AdMob Ad...");
-		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-			adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_748x110 withDelegate:self];
-		else
-			adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_320x48 withDelegate:self];
-		[adMobAd retain];
+		[self requestAdMobAd];
 	}
 	
     if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didFailedToRecieveiAd:)]))
@@ -546,7 +516,7 @@
 
 - (NSString *)publisherIdForAd:(AdMobView *)adView 
 {
-	return @"your_published_id"; //Replace this with your published Id
+	return @"a14a8d567c90c4c";//@"your_published_id"; //Replace this with your published Id
 }
 
 - (UIViewController *)currentViewControllerForAd:(AdMobView *)adView 
@@ -580,14 +550,9 @@
 {
 	CCLOG(@"AdMob: Did receive ad");
     
-#if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
-	[self updateBannerViewOrientationWithDirector];
-#elif GAME_AUTOROTATION==kGameAutorotationUIViewController
-    [self updateBannerViewOrientationUIViewController];
-#endif
-    
+    adBannerViewIsVisible = YES;
+    [self updateBannerViewOrientation];
 	[self.view addSubview:adMobAd];
-	[self.view sendSubviewToBack:adMobAd];
 	
     if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didLoadAdMobAd:)]))
         [adDelegate adController:self didLoadAdMobAd:adView];
@@ -597,6 +562,7 @@
 - (void)didFailToReceiveAd:(AdMobView *)adView 
 {
 	CCLOG(@"AdMob: Did fail to receive ad");
+    adBannerViewIsVisible = NO;
 	[adMobAd removeFromSuperview];
 	[adMobAd release];
 	adMobAd = nil;
@@ -605,46 +571,76 @@
         [adDelegate adController:self didFailedToRecieveAdMobAd:adView];
 }
 
-- (void) stopActionsForAdMobAd
-{	
-    //Pause Director
-	[[CCDirector sharedDirector] stopAnimation];
-	[[CCDirector sharedDirector] pause];
-}
-
-- (void) startActionsForAdMobAd
-{	
-    //Resume Director
-	[[CCDirector sharedDirector] stopAnimation];
-	[[CCDirector sharedDirector] resume];
-	[[CCDirector sharedDirector] startAnimation];
-}
-
-- (void)didPresentFullScreenModalFromAd:(AdMobView *)adView
+- (void)willPresentFullScreenModalFromAd:(AdMobView *)adView
 {
-	[self stopActionsForAdMobAd];
+	[self stopActionsForAd];
 }
 
 - (void)willDismissFullScreenModalFromAd:(AdMobView *)adView
 {
-	[self startActionsForAdMobAd];
+	[self startActionsForAd];
 }
 
 - (void)didDismissFullScreenModalFromAd:(AdMobView *)adView
 {
-#if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
-	[self updateBannerViewOrientationWithDirector];
-	[[UIApplication sharedApplication] setStatusBarOrientation:(UIInterfaceOrientation)[self currentOrientation]];
-#endif
+    [self updateBannerViewOrientation];
 }
 
 #pragma mark -
-#pragma mark Memory Management
+#pragma mark Interstitial Ads Support
 
-- (void) dealloc
-{	
-	[self removeBannerAd];
-    [super dealloc];
+- (void)addInterstitialAd
+{
+    interstitialAd = [[AdMobInterstitialAd requestInterstitialAt:AdMobInterstitialEventOther
+                                                        delegate:self 
+                                            interstitialDelegate:self] retain];
+}
+
+- (void)removeInterstitialAd
+{
+    if (interstitialAd)
+    {
+        [interstitialAd setDelegate:nil];
+		[interstitialAd release];
+		interstitialAd = nil;
+    }
+}
+
+#pragma mark -
+#pragma mark AdMob IntersticialAdDelegate
+
+// Sent when an interstitial ad request succefully returned an ad.  At the next transition
+// point in your application call [ad show] to display the interstitial.
+- (void)didReceiveInterstitial:(AdMobInterstitialAd *)ad
+{
+    if(ad == interstitialAd)
+    {
+        [ad show];
+    }
+}
+
+// Sent when an interstitial ad request completed without an interstitial to show.  This is
+// common since interstitials are shown sparingly to users.
+- (void)didFailToReceiveInterstitial:(AdMobInterstitialAd *)ad
+{
+    [interstitialAd release];
+    interstitialAd = nil;
+}
+
+- (void)interstitialWillAppear:(AdMobInterstitialAd *)ad
+{
+    [self stopActionsForAd];
+}
+
+- (void)interstitialWillDisappear:(AdMobInterstitialAd *)ad
+{
+    [self startActionsForAd];
+}
+
+- (void)interstitialDidDisappear:(AdMobInterstitialAd *)ad
+{
+    [interstitialAd release];
+    interstitialAd = nil;
 }
 
 @end
