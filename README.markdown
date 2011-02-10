@@ -19,6 +19,8 @@ Usage
 
 Replace the RootViewController in the Cocos2d project with the AdRootViewController.
 
+Define your AdMob publisher Id in the GameConfig.h
+
 To add the ad to the controller's view call:
 
     [viewController addBannerAd];
