@@ -516,7 +516,7 @@
 
 - (NSString *)publisherIdForAd:(AdMobView *)adView 
 {
-	return @"a14a8d567c90c4c";//@"your_published_id"; //Replace this with your published Id
+	return ADMOB_PUBLISHER_ID;
 }
 
 - (UIViewController *)currentViewControllerForAd:(AdMobView *)adView 

@@ -26,5 +26,7 @@
 //#define GAME_AUTOROTATION kGameAutorotationUIViewController
 //#define GAME_AUTOROTATION kGameAutorotationNone
 
+//Define your AdMob publisher Id
+#define ADMOB_PUBLISHER_ID @"your_publisher_id"
 
 #endif // __GAME_CONFIG_H
