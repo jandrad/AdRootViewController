@@ -21,7 +21,7 @@ enum
 
 @interface AdRootViewController : UIViewController <ADBannerViewDelegate, AdMobDelegate, AdMobInterstitialDelegate> 
 {	
-	id <AdViewControllerDelegate>__weak	adDelegate;
+	id <AdViewControllerDelegate>	adDelegate;
 	
 	//Banners:
 	id								adBannerView;	
@@ -62,5 +62,6 @@ enum
 
 - (void)adController:(AdRootViewController*)controller didLoadAdMobAd:(AdMobView*)adMobBanner;
 - (void)adController:(AdRootViewController*)controller didFailedToRecieveAdMobAd:(AdMobView*)adMobBanner;
+
 
 @end

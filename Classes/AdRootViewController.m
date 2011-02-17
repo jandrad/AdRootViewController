@@ -239,7 +239,7 @@
     }
 }
 
-- (void)removeBannerAd
+- (void)removeAdMobBannerView
 {
     if (adMobAd)
 	{
@@ -248,7 +248,10 @@
 		[adMobAd release];
 		adMobAd = nil;
 	}
-    
+}
+
+- (void)removeAdBannerView
+{
     if (adBannerView)
 	{
 		[adBannerView setDelegate:nil];
@@ -256,6 +259,12 @@
 		[adBannerView release];
 		adBannerView = nil;
 	}
+}
+
+- (void)removeBannerAd
+{
+    [self removeAdMobBannerView];
+    [self removeAdBannerView];
 }
 
 - (void)setAdBannerPosition:(int)pos
@@ -458,13 +467,7 @@
 {	
 	CCLOG(@"iAd Did Load");
 	
-	if (adMobAd)
-	{
-		[adMobAd setDelegate:nil];
-		[adMobAd removeFromSuperview];
-		[adMobAd release];
-		adMobAd = nil;
-	}
+	[self removeAdMobBannerView];
     
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))
 	if (![self.view.subviews containsObject:adBannerView])
@@ -563,9 +566,7 @@
 {
 	CCLOG(@"AdMob: Did fail to receive ad");
     adBannerViewIsVisible = NO;
-	[adMobAd removeFromSuperview];
-	[adMobAd release];
-	adMobAd = nil;
+    [self removeAdMobBannerView];
 	
     if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didFailedToRecieveAdMobAd:)]))
         [adDelegate adController:self didFailedToRecieveAdMobAd:adView];
@@ -596,7 +597,7 @@
                                             interstitialDelegate:self] retain];
 }
 
-- (void)removeInterstitialAd
+- (void)removeAdMobInterstitialAd
 {
     if (interstitialAd)
     {
@@ -604,6 +605,11 @@
 		[interstitialAd release];
 		interstitialAd = nil;
     }
+}
+
+- (void)removeInterstitialAd
+{
+    [self removeAdMobInterstitialAd];
 }
 
 #pragma mark -
@@ -623,8 +629,7 @@
 // common since interstitials are shown sparingly to users.
 - (void)didFailToReceiveInterstitial:(AdMobInterstitialAd *)ad
 {
-    [interstitialAd release];
-    interstitialAd = nil;
+    [self removeAdMobInterstitialAd];
 }
 
 - (void)interstitialWillAppear:(AdMobInterstitialAd *)ad
@@ -639,8 +644,7 @@
 
 - (void)interstitialDidDisappear:(AdMobInterstitialAd *)ad
 {
-    [interstitialAd release];
-    interstitialAd = nil;
+    [self removeAdMobInterstitialAd];
 }
 
 @end
