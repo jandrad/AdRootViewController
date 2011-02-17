@@ -15,7 +15,7 @@
 
 @implementation iAdsTestAppDelegate
 
-@synthesize window;
+@synthesize window, viewController;
 
 - (void) removeStartupFlicker
 {
@@ -53,8 +53,12 @@
 	CCDirector *director = [CCDirector sharedDirector];
 	
 	// Init the View Controller
-	viewController = [[AdRootViewController alloc] initWithNibName:nil bundle:nil];
-	viewController.wantsFullScreenLayout = YES;
+	AdRootViewController* controller = [[AdRootViewController alloc] initWithNibName:nil bundle:nil];
+	controller.wantsFullScreenLayout = YES;
+    
+    //Assign the viewController
+    self.viewController = controller;
+    [controller release];
 	
 	//
 	// Create the EAGLView manually
@@ -81,7 +85,7 @@
 	//
 	// IMPORTANT:
 	// By default, this template only supports Landscape orientations.
-	// Edit the RootViewController.m file to edit the supported orientations.
+	// Edit the AdRootViewController.m file to edit the supported orientations.
 	//
 #if GAME_AUTOROTATION == kGameAutorotationUIViewController
 	[director setDeviceOrientation:kCCDeviceOrientationPortrait];
@@ -92,12 +96,11 @@
 	[director setAnimationInterval:1.0/60];
 	[director setDisplayFPS:YES];
 	
-	
 	// make the OpenGLView a child of the view controller
 	[viewController setView:glView];
 	
 	// make the View Controller a child of the main window
-	[window addSubview: viewController.view];
+	[window addSubview: self.viewController.view];
 	
 	[window makeKeyAndVisible];
 	
@@ -111,10 +114,6 @@
 	[self removeStartupFlicker];
 	
 	[director runWithScene:[HelloWorld scene]];
-    
-    //Ad banner to view and set the position
-    [viewController addBannerAd];
-    [viewController setAdBannerPosition:kAdBannerPositionBottom];
 }
 
 

@@ -10,11 +10,13 @@
 
 @class AdRootViewController;
 
-@interface iAdsTestAppDelegate : NSObject <UIApplicationDelegate> {
+@interface iAdsTestAppDelegate : NSObject <UIApplicationDelegate> 
+{
 	UIWindow			*window;
 	AdRootViewController	*viewController;
 }
 
 @property (nonatomic, retain) UIWindow *window;
+@property (nonatomic, retain) AdRootViewController *viewController;
 
 @end
