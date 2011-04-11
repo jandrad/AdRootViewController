@@ -1,9 +1,9 @@
 //
-//  HelloWorldLayer.m
-//  ___PROJECTNAME___
+//  HelloWorldScene.m
+//  iAdsTest
 //
-//  Created by ___FULLUSERNAME___ on ___DATE___.
-//  Copyright ___ORGANIZATIONNAME___ ___YEAR___. All rights reserved.
+//  Created by Jose Andrade on 2/1/11.
+//  Copyright Jose Andrade 2011. All rights reserved.
 //
 
 // Import the interfaces

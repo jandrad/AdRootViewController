@@ -1267,10 +1267,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = iAdsTest_Prefix.pch;
 				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
-				HEADER_SEARCH_PATHS = (
-					"“$(SRCROOT)/libs/Chipmunk/include/chipmunk”",
-					libs,
-				);
+				HEADER_SEARCH_PATHS = libs;
 				INFOPLIST_FILE = Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				LIBRARY_SEARCH_PATHS = (
@@ -1298,10 +1295,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = iAdsTest_Prefix.pch;
 				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
-				HEADER_SEARCH_PATHS = (
-					"“$(SRCROOT)/libs/Chipmunk/include/chipmunk”",
-					libs,
-				);
+				HEADER_SEARCH_PATHS = libs;
 				INFOPLIST_FILE = Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
 				LIBRARY_SEARCH_PATHS = (

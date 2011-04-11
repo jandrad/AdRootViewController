@@ -3,7 +3,7 @@
 //  iAdsTest
 //
 //  Created by Jose Andrade on 2/1/11.
-//  Copyright __MyCompanyName__ 2011. All rights reserved.
+//  Copyright Jose Andrade 2011. All rights reserved.
 //
 
 //
@@ -230,6 +230,10 @@
                                                           ADBannerContentSizeIdentifierPortrait, 
                                                           ADBannerContentSizeIdentifierLandscape, nil]];
         
+        CGSize bannerSize = [ADBannerView sizeFromBannerContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
+        [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
+        [adBannerView setFrame:CGRectMake(0,0,bannerSize.width,bannerSize.height)];
+        
         [self.view addSubview:adBannerView];
         [self updateBannerViewOrientation];
     }
@@ -293,7 +297,7 @@
     //Banner Position
     int pos = adBannerPosition;
     
-    UIView *bannerView = nil;;
+    UIView *bannerView = nil;
     
 	if (adBannerView)
 	{	
