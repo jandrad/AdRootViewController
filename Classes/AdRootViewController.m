@@ -15,8 +15,8 @@
 
 #import "AdRootViewController.h"
 #import "GameConfig.h"
-#import "AdMobView.h"
-#import "AdMobInterstitialAd.h"
+#import "GADBannerView.h"
+#import "GADInterstitial.h"
 
 @implementation AdRootViewController
 
@@ -208,12 +208,43 @@
 
 - (void)requestAdMobAd
 {
-    //Request an AdMob Ad
+    //Initialize admob banner
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
-        adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_748x110 withDelegate:self];
+        adMobAd = [[GADBannerView alloc] initWithFrame:CGRectMake(0.0,0.0,
+                                                                  GAD_SIZE_728x90.width,
+                                                                  GAD_SIZE_728x90.height)];
     else
-        adMobAd = [AdMobView requestAdOfSize:ADMOB_SIZE_320x48 withDelegate:self];
-    [adMobAd retain];
+    {
+        adMobAd = [[GADBannerView alloc] initWithFrame:CGRectMake(0.0,0.0,
+                                                GAD_SIZE_320x50.width,
+                                                GAD_SIZE_320x50.height)];
+    }
+    
+    //Set the ad properties
+    adMobAd.adUnitID = ADMOB_PUBLISHER_ID;
+    adMobAd.rootViewController = self;
+    adMobAd.delegate = self;
+    
+    [self.view addSubview:adMobAd];
+    
+    //Initialize ad request
+    GADRequest *request = [GADRequest request];
+    
+    //Testing on for the Simulator, it is ignored in devices
+    request.testing = YES;
+    
+    //Request additional parameters, customize ad colors
+    request.additionalParameters = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+                                    @"000000", @"color_bg",
+                                    @"FFFFFF", @"color_bg_top",
+                                    @"FFFFFF", @"color_border",
+                                    @"000080", @"color_link",
+                                    @"FFFFFF", @"color_text",
+                                    @"008000", @"color_url",
+                                    nil];
+    
+    //Load ad request
+    [adMobAd loadRequest:request];
 }
 
 - (void)addBannerAd
@@ -362,7 +393,7 @@
             
         }
             break;
-        default: // This case was used to deal with the Unknown device orientation appearing on the iPad
+        default: //This case is used to deal with the Unknown device orientation
         {
             if (adBannerViewIsVisible)
                 [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(0.5-pos))];
@@ -521,74 +552,48 @@
 #pragma mark -
 #pragma mark AdMobDelegate
 
-- (NSString *)publisherIdForAd:(AdMobView *)adView 
+- (void)adViewDidReceiveAd:(GADBannerView *)view
 {
-	return ADMOB_PUBLISHER_ID;
-}
-
-- (UIViewController *)currentViewControllerForAd:(AdMobView *)adView 
-{
-	return self;
-}
-
-- (UIColor *)adBackgroundColorForAd:(AdMobView *)adView 
-{
-	return [UIColor colorWithRed:0 green:0 blue:0 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (UIColor *)primaryTextColorForAd:(AdMobView *)adView 
-{
-	return [UIColor colorWithRed:1 green:1 blue:1 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (UIColor *)secondaryTextColorForAd:(AdMobView *)adView 
-{
-	return [UIColor colorWithRed:1 green:1 blue:1 alpha:1]; // this should be prefilled; if not, provide a UIColor
-}
-
-- (NSArray *)testDevices 
-{
-	return [NSArray arrayWithObjects:
-			ADMOB_SIMULATOR_ID,								//iPhone Simulator
-			nil];
-}
-
-- (void)didReceiveAd:(AdMobView *)adView 
-{
-	CCLOG(@"AdMob: Did receive ad");
+    CCLOG(@"AdMob: Did receive ad banner view");
     
     adBannerViewIsVisible = YES;
     [self updateBannerViewOrientation];
-	[self.view addSubview:adMobAd];
 	
     if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didLoadAdMobAd:)]))
-        [adDelegate adController:self didLoadAdMobAd:adView];
+        [adDelegate adController:self didLoadAdMobAd:view];
 }
 
-// Sent when an ad request failed to load an ad
-- (void)didFailToReceiveAd:(AdMobView *)adView 
+- (void)adView:(GADBannerView *)view didFailToReceiveAdWithError:(GADRequestError *)error
 {
-	CCLOG(@"AdMob: Did fail to receive ad");
-    adBannerViewIsVisible = NO;
-    [self removeAdMobBannerView];
-	
-    if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didFailedToRecieveAdMobAd:)]))
-        [adDelegate adController:self didFailedToRecieveAdMobAd:adView];
+    if (view == adMobAd)
+    {
+        CCLOG(@"AdMob: Did fail to receive ad banner view with error: %@",[error localizedDescription]);
+        adBannerViewIsVisible = NO;
+        [self updateBannerViewOrientation];
+        
+        if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didFailedToRecieveAdMobAd:)]))
+            [adDelegate adController:self didFailedToRecieveAdMobAd:view];
+    }
 }
 
-- (void)willPresentFullScreenModalFromAd:(AdMobView *)adView
+- (void)adViewWillPresentScreen:(GADBannerView *)adView
 {
-	[self stopActionsForAd];
+    [self stopActionsForAd];
 }
 
-- (void)willDismissFullScreenModalFromAd:(AdMobView *)adView
+- (void)adViewWillDismissScreen:(GADBannerView *)adView
 {
-	[self startActionsForAd];
+    [self startActionsForAd];
 }
 
-- (void)didDismissFullScreenModalFromAd:(AdMobView *)adView
+- (void)adViewDidDismissScreen:(GADBannerView *)adView
 {
     [self updateBannerViewOrientation];
+}
+
+- (void)adViewWillLeaveApplication:(GADBannerView *)adView
+{
+    
 }
 
 #pragma mark -
@@ -596,9 +601,19 @@
 
 - (void)addInterstitialAd
 {
-    interstitialAd = [[AdMobInterstitialAd requestInterstitialAt:AdMobInterstitialEventOther
-                                                        delegate:self 
-                                            interstitialDelegate:self] retain];
+    //Initialize interstitial ad
+    interstitialAd = [[GADInterstitial alloc] init];
+    interstitialAd.adUnitID = ADMOB_PUBLISHER_ID;
+    interstitialAd.delegate = self;
+    
+    //Initialize ad request
+    GADRequest *request = [GADRequest request];
+    
+    //Testing on for the Simulator, it is ignored in devices
+    request.testing = YES;
+    
+    //Load ad request
+    [interstitialAd loadRequest:request];
 }
 
 - (void)removeAdMobInterstitialAd
@@ -621,32 +636,37 @@
 
 // Sent when an interstitial ad request succefully returned an ad.  At the next transition
 // point in your application call [ad show] to display the interstitial.
-- (void)didReceiveInterstitial:(AdMobInterstitialAd *)ad
+- (void)interstitialDidReceiveAd:(GADInterstitial *)interstitial
 {
-    if(ad == interstitialAd)
+    if(interstitial == interstitialAd)
     {
-        [ad show];
+        CCLOG(@"AdMob: Did receive interstitial ad");
+        [interstitialAd presentFromRootViewController:self];
     }
 }
 
 // Sent when an interstitial ad request completed without an interstitial to show.  This is
 // common since interstitials are shown sparingly to users.
-- (void)didFailToReceiveInterstitial:(AdMobInterstitialAd *)ad
+- (void)interstitial:(GADInterstitial *)interstitial didFailToReceiveAdWithError:(GADRequestError *)error
 {
-    [self removeAdMobInterstitialAd];
+    if(interstitial == interstitialAd)
+    {
+        CCLOG(@"AdMob: Did fail to recieve interstitial ad with error: %@", [error localizedDescription]);
+        [self removeAdMobInterstitialAd];
+    }
 }
 
-- (void)interstitialWillAppear:(AdMobInterstitialAd *)ad
+- (void)interstitialWillPresentScreen:(GADInterstitial *)interstitial
 {
     [self stopActionsForAd];
 }
 
-- (void)interstitialWillDisappear:(AdMobInterstitialAd *)ad
+- (void)interstitialWillDismissScreen:(GADInterstitial *)interstitial
 {
     [self startActionsForAd];
 }
 
-- (void)interstitialDidDisappear:(AdMobInterstitialAd *)ad
+- (void)interstitialDidDismissScreen:(GADInterstitial *)interstitial
 {
     [self removeAdMobInterstitialAd];
 }

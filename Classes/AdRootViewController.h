@@ -8,8 +8,8 @@
 
 #import <UIKit/UIKit.h>
 #import <iAd/iAd.h>
-#import "AdMobDelegateProtocol.h"
-#import "AdMobInterstitialDelegateProtocol.h"
+#import "GADBannerViewDelegate.h"
+#import "GADInterstitialDelegate.h"
 
 enum
 {
@@ -19,16 +19,16 @@ enum
 
 @protocol AdViewControllerDelegate;
 
-@interface AdRootViewController : UIViewController <ADBannerViewDelegate, AdMobDelegate, AdMobInterstitialDelegate> 
+@interface AdRootViewController : UIViewController <ADBannerViewDelegate, GADBannerViewDelegate, GADInterstitialDelegate> 
 {	
 	id <AdViewControllerDelegate>	adDelegate;
 	
 	//Banners:
 	id								adBannerView;	
-	AdMobView*						adMobAd;
+	GADBannerView*					adMobAd;
     
     //Interstitial Ads:
-    AdMobInterstitialAd             *interstitialAd;
+    GADInterstitial                 *interstitialAd;
     
 
     int                             adBannerPosition;    
@@ -60,8 +60,8 @@ enum
 - (void)adController:(AdRootViewController*)controller didLoadiAd:(id)iadBanner;
 - (void)adController:(AdRootViewController*)controller didFailedToRecieveiAd:(id)iadBanner;
 
-- (void)adController:(AdRootViewController*)controller didLoadAdMobAd:(AdMobView*)adMobBanner;
-- (void)adController:(AdRootViewController*)controller didFailedToRecieveAdMobAd:(AdMobView*)adMobBanner;
+- (void)adController:(AdRootViewController*)controller didLoadAdMobAd:(GADBannerView*)adMobBanner;
+- (void)adController:(AdRootViewController*)controller didFailedToRecieveAdMobAd:(GADBannerView*)adMobBanner;
 
 
 @end
