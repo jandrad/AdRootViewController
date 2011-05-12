@@ -41,6 +41,8 @@
 #endif
     }
     
+    CCLOG(@"Google AdMob SDK Version: %@", [GADRequest sdkVersion]);
+    
     return self;
 }
 
@@ -60,7 +62,7 @@
 	//if (UIDeviceOrientationIsLandscape(orientation))
 	//{
 		[[CCDirector sharedDirector] setDeviceOrientation:(ccDeviceOrientation)orientation];
-		[self updateBannerViewOrientationWithDirector];
+        [self rotateBannerViewWithDirector:orientation animate:NO];
 	//}
 }
 #endif
@@ -142,7 +144,7 @@
 	glView.frame = rect;
     
     //Rotate Ad Banner to Interface Orientation
-    [self rotateBannerViewWithUIViewController:toInterfaceOrientation];
+    [self rotateBannerViewWithUIViewController:toInterfaceOrientation animate:NO];
 }
 #endif // GAME_AUTOROTATION == kGameAutorotationUIViewController
 
@@ -174,22 +176,21 @@
 #pragma mark -
 #pragma mark Ad Helper Methods
 
-- (void)updateBannerViewOrientationWithDirector
+- (void)updateBannerViewOrientationWithAnimation:(BOOL)animate
 {
-	[self rotateBannerViewWithDirector:[[CCDirector sharedDirector] deviceOrientation]];
-}
-
-- (void)updateBannerViewOrientationUIViewController
-{
-    [self rotateBannerViewWithUIViewController:[self interfaceOrientation]];
+#if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
+	[self rotateBannerViewWithDirector:[[CCDirector sharedDirector] deviceOrientation] animate:animate];
+#elif GAME_AUTOROTATION==kGameAutorotationUIViewController
+    [self rotateBannerViewWithUIViewController:[self interfaceOrientation] animate:animate];
+#endif
 }
 
 - (void)updateBannerViewOrientation
 {
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
-	[self updateBannerViewOrientationWithDirector];
+	[self rotateBannerViewWithDirector:[[CCDirector sharedDirector] deviceOrientation] animate:YES];
 #elif GAME_AUTOROTATION==kGameAutorotationUIViewController
-    [self updateBannerViewOrientationUIViewController];
+    [self rotateBannerViewWithUIViewController:[self interfaceOrientation] animate:YES];
 #endif
 }
 
@@ -203,8 +204,23 @@
     return [self getBannerHeight:[self interfaceOrientation]];
 }
 
+- (void)setAdBannerPosition:(int)pos
+{
+    if ((pos == kAdBannerPositionTop)||(pos ==kAdBannerPositionBottom))
+    {
+        adBannerPosition = pos;
+    }
+    else
+    {
+        CCLOG(@"Position Not Supported. Setting Position to Top.");
+        adBannerPosition = kAdBannerPositionTop;
+    }
+    
+    [self updateBannerViewOrientationWithAnimation:NO];
+}
+
 #pragma mark -
-#pragma mark Banner Ads Support
+#pragma mark Request Banner Ads
 
 - (void)requestAdMobAd
 {
@@ -225,13 +241,17 @@
     adMobAd.rootViewController = self;
     adMobAd.delegate = self;
     
-    [self.view addSubview:adMobAd];
+    adContainerView = [[UIView alloc] initWithFrame:adMobAd.frame];
+    [self.view addSubview:adContainerView];
+    [adContainerView addSubview:adMobAd];
+    
+    //[self.view addSubview:adMobAd];
     
     //Initialize ad request
     GADRequest *request = [GADRequest request];
     
-    //Testing on for the Simulator, it is ignored in devices
-    request.testing = YES;
+    //Testing on for the Simulator, set other devices UDID here.
+    request.testDevices = [NSArray arrayWithObjects:GAD_SIMULATOR_ID,nil];
     
     //Request additional parameters, customize ad colors
     request.additionalParameters = [NSMutableDictionary dictionaryWithObjectsAndKeys:
@@ -245,6 +265,24 @@
     
     //Load ad request
     [adMobAd loadRequest:request];
+    [self updateBannerViewOrientation];
+}
+
+- (void)requestiAd
+{
+    Class classAdBannerView = NSClassFromString(@"ADBannerView");
+    adBannerView = [[classAdBannerView alloc] init];
+    [adBannerView setDelegate:self];
+    [adBannerView setRequiredContentSizeIdentifiers: [NSSet setWithObjects: 
+                                                      ADBannerContentSizeIdentifierPortrait, 
+                                                      ADBannerContentSizeIdentifierLandscape, nil]];
+    
+    CGSize bannerSize = [ADBannerView sizeFromBannerContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
+    [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
+    [adBannerView setFrame:CGRectMake(0,0,bannerSize.width,bannerSize.height)];
+    
+    [self.view addSubview:adBannerView];
+    [self updateBannerViewOrientation];
 }
 
 - (void)addBannerAd
@@ -255,24 +293,16 @@
     Class classAdBannerView = NSClassFromString(@"ADBannerView");
     if (classAdBannerView != nil) 
     {
-        adBannerView = [[classAdBannerView alloc] init];
-        [adBannerView setDelegate:self];
-        [adBannerView setRequiredContentSizeIdentifiers: [NSSet setWithObjects: 
-                                                          ADBannerContentSizeIdentifierPortrait, 
-                                                          ADBannerContentSizeIdentifierLandscape, nil]];
-        
-        CGSize bannerSize = [ADBannerView sizeFromBannerContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
-        [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
-        [adBannerView setFrame:CGRectMake(0,0,bannerSize.width,bannerSize.height)];
-        
-        [self.view addSubview:adBannerView];
-        [self updateBannerViewOrientation];
+        [self requestiAd];
     }
     else
     {
         [self requestAdMobAd];
     }
 }
+
+#pragma mark -
+#pragma mark Remove Banner Ads
 
 - (void)removeAdMobBannerView
 {
@@ -282,6 +312,12 @@
 		[adMobAd removeFromSuperview];
 		[adMobAd release];
 		adMobAd = nil;
+        
+        [adContainerView removeFromSuperview];
+        [adContainerView release];
+        adContainerView = nil;
+        
+        CCLOG(@"Removed AdMobAd");
 	}
 }
 
@@ -293,6 +329,8 @@
 		[adBannerView removeFromSuperview];
 		[adBannerView release];
 		adBannerView = nil;
+        
+        CCLOG(@"Removed iAd Banner View");
 	}
 }
 
@@ -302,25 +340,10 @@
     [self removeAdBannerView];
 }
 
-- (void)setAdBannerPosition:(int)pos
-{
-    if ((pos == kAdBannerPositionTop)||(pos ==kAdBannerPositionBottom))
-    {
-        adBannerPosition = pos;
-    }
-    else
-    {
-        CCLOG(@"Position Not Supported. Setting Position to Top.");
-        adBannerPosition = kAdBannerPositionTop;
-    }
-    
-    [self updateBannerViewOrientation];
-}
-
 #pragma mark -
 #pragma mark Banner Rotation
 
-- (void)rotateBannerViewWithDirector:(UIDeviceOrientation)toDeviceOrientation
+- (void)rotateBannerViewWithDirector:(UIDeviceOrientation)toDeviceOrientation animate:(BOOL)animate
 {	
 	//Get Screen Size
 	CGSize screenSize = [[UIScreen mainScreen] bounds].size;
@@ -342,7 +365,7 @@
     
     if (adMobAd)
     {
-        bannerView = adMobAd;
+        bannerView = adContainerView;
     }
     
     if (!bannerView) return;
@@ -358,6 +381,8 @@
     {
         case UIDeviceOrientationPortrait:
         {
+            if (animate) 
+                [UIView beginAnimations:@"Animate Banner" context:nil];
             if (adBannerViewIsVisible)
                 [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(0.5-pos))];
             else
@@ -367,6 +392,8 @@
         case UIDeviceOrientationPortraitUpsideDown:
         {
             [bannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(180))];
+            if (animate) 
+                [UIView beginAnimations:@"Animate Banner" context:nil];
             if (adBannerViewIsVisible)
                 [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*(1-pos) + bannerSize.height*(-0.5+pos))];
             else
@@ -377,6 +404,8 @@
         case UIDeviceOrientationLandscapeLeft:
         {
             [bannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(90))];
+            if (animate) 
+                [UIView beginAnimations:@"Animate Banner" context:nil];
             if (adBannerViewIsVisible)
                 [bannerView setCenter:CGPointMake(screenSize.width*(1-pos) + bannerSize.height*(-0.5+pos), screenSize.height/2)];
             else
@@ -386,6 +415,8 @@
         case UIDeviceOrientationLandscapeRight:
         {
             [bannerView setTransform:CGAffineTransformMakeRotation(CC_DEGREES_TO_RADIANS(-90))];
+            if (animate) 
+                [UIView beginAnimations:@"Animate Banner" context:nil];
             if (adBannerViewIsVisible)
                 [bannerView setCenter:CGPointMake(screenSize.width*pos + bannerSize.height*(0.5-pos), screenSize.height/2)];
             else
@@ -395,6 +426,8 @@
             break;
         default: //This case is used to deal with the Unknown device orientation
         {
+            if (animate) 
+                [UIView beginAnimations:@"Animate Banner" context:nil];
             if (adBannerViewIsVisible)
                 [bannerView setCenter:CGPointMake(screenSize.width/2, screenSize.height*pos + bannerSize.height*(0.5-pos))];
             else
@@ -402,9 +435,12 @@
         }
             break;
     }
+    
+    if (animate) 
+        [UIView commitAnimations];
 }
 
-- (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation;
+- (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation animate:(BOOL)animate
 {
     //Get Screen Size
 	CGSize screenSize = [[UIScreen mainScreen] bounds].size;
@@ -427,39 +463,39 @@
             [adBannerView setCurrentContentSizeIdentifier:ADBannerContentSizeIdentifierPortrait];
         
         CGRect adBannerViewFrame = [adBannerView frame];
+        adBannerViewFrame.origin.x = 0;
         
         if (adBannerViewIsVisible) 
-        {
-            adBannerViewFrame.origin.x = 0;
             adBannerViewFrame.origin.y = pos*(windowSize.height - [self getBannerHeight:toInterfaceOrientation]);
-        } 
         else 
-        {
-            adBannerViewFrame.origin.x = 0;
             adBannerViewFrame.origin.y = pos*windowSize.height + (2*pos-1)*[self getBannerHeight:toInterfaceOrientation];
-        }
         
-        [UIView beginAnimations:@"Animate Banner" context:nil];
+        if (animate) 
+            [UIView beginAnimations:@"Animate Banner" context:nil];
         [adBannerView setFrame:adBannerViewFrame];
-        [UIView commitAnimations];
+        if (animate) 
+            [UIView commitAnimations];
     }
     
     if (adMobAd) 
     {    
-        CGRect adBannerViewFrame = [adMobAd frame];
+        CGRect adBannerViewFrame = [adContainerView frame];
         
         if (UIInterfaceOrientationIsLandscape(toInterfaceOrientation)) 
-        {
-            adBannerViewFrame.origin.x = windowSize.width*0.5 - adMobAd.frame.size.width*0.5;
-            adBannerViewFrame.origin.y = pos*(windowSize.height - adMobAd.frame.size.height);
-        }
+            adBannerViewFrame.origin.x = windowSize.width*0.5 - adContainerView.frame.size.width*0.5;
         else 
-        {
             adBannerViewFrame.origin.x = 0;
-            adBannerViewFrame.origin.y = pos*(windowSize.height - adMobAd.frame.size.height);
-        }
         
-        [adMobAd setFrame:adBannerViewFrame];
+        if (adBannerViewIsVisible)
+            adBannerViewFrame.origin.y = pos*(windowSize.height - adContainerView.frame.size.height);
+        else
+            adBannerViewFrame.origin.y = pos*windowSize.height + (2*pos-1)*adContainerView.frame.size.height;
+            
+        if (animate) 
+            [UIView beginAnimations:@"Animate Banner" context:nil];
+        [adContainerView setFrame:adBannerViewFrame];
+        if (animate)
+            [UIView commitAnimations];
     }
 }
 
@@ -556,6 +592,8 @@
 {
     CCLOG(@"AdMob: Did receive ad banner view");
     
+    [self removeAdBannerView];
+    
     adBannerViewIsVisible = YES;
     [self updateBannerViewOrientation];
 	
@@ -570,6 +608,13 @@
         CCLOG(@"AdMob: Did fail to receive ad banner view with error: %@",[error localizedDescription]);
         adBannerViewIsVisible = NO;
         [self updateBannerViewOrientation];
+        
+        if (!adBannerView)
+        {
+            CCLOG(@"Loading iAd...");
+            [self removeAdMobBannerView];
+            [self requestiAd];
+        }
         
         if ((adDelegate != nil) && ([(NSObject *)adDelegate respondsToSelector:@selector(adController: didFailedToRecieveAdMobAd:)]))
             [adDelegate adController:self didFailedToRecieveAdMobAd:view];
@@ -609,8 +654,8 @@
     //Initialize ad request
     GADRequest *request = [GADRequest request];
     
-    //Testing on for the Simulator, it is ignored in devices
-    request.testing = YES;
+    //Testing on for the Simulator, set other devices UDID here.
+    request.testDevices = [NSArray arrayWithObjects:GAD_SIMULATOR_ID,nil];
     
     //Load ad request
     [interstitialAd loadRequest:request];

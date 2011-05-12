@@ -26,6 +26,7 @@ enum
 	//Banners:
 	id								adBannerView;	
 	GADBannerView*					adMobAd;
+    UIView*                         adContainerView;
     
     //Interstitial Ads:
     GADInterstitial                 *interstitialAd;
@@ -44,13 +45,11 @@ enum
 - (void)addInterstitialAd;
 - (void)removeInterstitialAd;
 
-- (void)rotateBannerViewWithDirector:(UIDeviceOrientation)toDeviceOrientation;
-- (void)updateBannerViewOrientationWithDirector;
-
-- (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation;
-- (void)updateBannerViewOrientationUIViewController;
+- (void)rotateBannerViewWithDirector:(UIDeviceOrientation)toDeviceOrientation animate:(BOOL)animate;
+- (void)rotateBannerViewWithUIViewController:(UIInterfaceOrientation)toInterfaceOrientation animate:(BOOL)animate;
 
 - (void)updateBannerViewOrientation;
+- (void)updateBannerViewOrientationWithAnimation:(BOOL)animate;
 
 @end
 
