@@ -6,6 +6,7 @@ PLBlocks.framework/*
 *~.nib/ 
 *.perspective 
 *.perspectivev3
+*.xcworkspace/
 xcuserdata/
 build/
 
@@ -15,3 +16,4 @@ build/
 # osx noise
 .DS_store
 .DS_Store
+*.xcuserstate
