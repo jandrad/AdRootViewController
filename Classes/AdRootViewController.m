@@ -179,7 +179,7 @@
 - (void)updateBannerViewOrientationWithAnimation:(BOOL)animate
 {
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
-	[self rotateBannerViewWithDirector:[[CCDirector sharedDirector] deviceOrientation] animate:animate];
+	[self rotateBannerViewWithDirector:(UIDeviceOrientation)[[CCDirector sharedDirector] deviceOrientation] animate:animate];
 #elif GAME_AUTOROTATION==kGameAutorotationUIViewController
     [self rotateBannerViewWithUIViewController:[self interfaceOrientation] animate:animate];
 #endif
@@ -188,7 +188,7 @@
 - (void)updateBannerViewOrientation
 {
 #if ((GAME_AUTOROTATION == kGameAutorotationCCDirector) || (GAME_AUTOROTATION==kGameAutorotationNone))	
-	[self rotateBannerViewWithDirector:[[CCDirector sharedDirector] deviceOrientation] animate:YES];
+	[self rotateBannerViewWithDirector:(UIDeviceOrientation)[[CCDirector sharedDirector] deviceOrientation] animate:YES];
 #elif GAME_AUTOROTATION==kGameAutorotationUIViewController
     [self rotateBannerViewWithUIViewController:[self interfaceOrientation] animate:YES];
 #endif

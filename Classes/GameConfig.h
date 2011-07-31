@@ -27,6 +27,7 @@
 //#define GAME_AUTOROTATION kGameAutorotationNone
 
 //Define your AdMob publisher Id
+#error Define your Admob publisher id here and remove this error.
 #define ADMOB_PUBLISHER_ID @"your_publisher_id"
 
 #endif // __GAME_CONFIG_H

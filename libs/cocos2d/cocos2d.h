@@ -2,6 +2,7 @@
  * cocos2d for iPhone: http://www.cocos2d-iphone.org
  *
  * Copyright (c) 2008-2010 Ricardo Quesada
+ * Copyright (c) 2011 Zynga Inc.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +39,8 @@
  */
 
 // 0x00 HI ME LO
-// 00   00 99 05
-#define COCOS2D_VERSION 0x00009905
+// 00   01 00 01
+#define COCOS2D_VERSION 0x00010001
 
 #import <Availability.h>
 
@@ -66,7 +67,6 @@
 #import "CCAnimationCache.h"
 #import "CCSprite.h"
 #import "CCSpriteFrame.h"
-#import "CCSpriteSheet.h"
 #import "CCSpriteBatchNode.h"
 #import "CCSpriteFrameCache.h"
 
@@ -149,10 +149,6 @@
 #if CC_ENABLE_PROFILERS
 #import "Support/CCProfiling.h"
 #endif // CC_ENABLE_PROFILERS
-
-
-// compatibility with v0.8
-#import "CCCompatibility.h"
 
 
 // free functions
