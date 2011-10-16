@@ -18,10 +18,13 @@
 #import "GADBannerView.h"
 #import "GADInterstitial.h"
 
+//Define your AdMob publisher Id
+//#error Define your Admob publisher id here and remove this error.
+#define ADMOB_PUBLISHER_ID @"your_publisher_id"
+
 @implementation AdRootViewController
 
 @synthesize adDelegate, adBannerPosition;
-
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -59,11 +62,11 @@
 	
     
     //Modify this to set the orientation needed using CCDirector
-	//if (UIDeviceOrientationIsLandscape(orientation))
-	//{
+	if (UIDeviceOrientationIsLandscape(orientation) || UIDeviceOrientationIsPortrait(orientation))
+	{
 		[[CCDirector sharedDirector] setDeviceOrientation:(ccDeviceOrientation)orientation];
         [self rotateBannerViewWithDirector:orientation animate:NO];
-	//}
+	}
 }
 #endif
 
@@ -273,7 +276,7 @@
     
     //Load ad request
     [adMobAd loadRequest:request];
-    [self updateBannerViewOrientation];
+    [self updateBannerViewOrientationWithAnimation:NO];
 }
 
 - (void)requestiAd

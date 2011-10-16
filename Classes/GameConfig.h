@@ -22,12 +22,8 @@
 //
 // Define here the type of autorotation that you want for your game
 //
-#define GAME_AUTOROTATION kGameAutorotationCCDirector
-//#define GAME_AUTOROTATION kGameAutorotationUIViewController
+//#define GAME_AUTOROTATION kGameAutorotationCCDirector
+#define GAME_AUTOROTATION kGameAutorotationUIViewController
 //#define GAME_AUTOROTATION kGameAutorotationNone
-
-//Define your AdMob publisher Id
-#error Define your Admob publisher id here and remove this error.
-#define ADMOB_PUBLISHER_ID @"your_publisher_id"
 
 #endif // __GAME_CONFIG_H
