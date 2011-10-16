@@ -226,9 +226,17 @@
 {
     //Initialize admob banner
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad)
+    {
+#if GAME_AUTOROTATION == kGameAutorotationUIViewController
+        adMobAd = [[GADBannerView alloc] initWithFrame:CGRectMake(20.0,0.0,
+                                                                  GAD_SIZE_728x90.width,
+                                                                  GAD_SIZE_728x90.height)];
+#else
         adMobAd = [[GADBannerView alloc] initWithFrame:CGRectMake(0.0,0.0,
                                                                   GAD_SIZE_728x90.width,
                                                                   GAD_SIZE_728x90.height)];
+#endif
+    }
     else
     {
         adMobAd = [[GADBannerView alloc] initWithFrame:CGRectMake(0.0,0.0,
