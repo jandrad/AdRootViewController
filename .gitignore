@@ -19,3 +19,4 @@ build/
 *.xcuserstate
 
 /iAdsTest.xcodeproj/project.xcworkspace/xcuserdata/jandrad.xcuserdatad/UserInterfaceState.xcuserstate
+/libs/.DS_Store
