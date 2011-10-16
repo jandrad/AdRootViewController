@@ -46,7 +46,7 @@ enum tags
 {
 	// always call "super" init
 	// Apple recommends to re-assign "self" with the "super" return value
-	if( (self=[super init] )) 
+	if( (self=[super initWithColor:ccc4(150,150,150,255)] )) 
     {
         CCLabelTTF *label = [CCLabelTTF labelWithString:@"Hello Ads" fontName:@"Marker Felt" fontSize:32];
         label.tag = kTitleLabelTag;
