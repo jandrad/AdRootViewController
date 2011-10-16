@@ -19,7 +19,7 @@ Usage
 
 Replace the RootViewController in the Cocos2d project with the AdRootViewController.
 
-Define your AdMob publisher Id in the GameConfig.h
+Define your AdMob publisher Id
 
     #define ADMOB_PUBLISHER_ID @"your_publisher_id"
 
