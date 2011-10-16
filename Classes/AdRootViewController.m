@@ -282,7 +282,7 @@
     [adBannerView setFrame:CGRectMake(0,0,bannerSize.width,bannerSize.height)];
     
     [self.view addSubview:adBannerView];
-    [self updateBannerViewOrientation];
+    [self updateBannerViewOrientationWithAnimation:NO];
 }
 
 - (void)addBannerAd
